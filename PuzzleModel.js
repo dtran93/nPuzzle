@@ -16,7 +16,7 @@ var State1;
 	// makes the buttons call when clicked and set up puzzle
 	window.onload = function(){
 		document.getElementById("shufflebutton").onclick = shuffle;
-		// document.getElementById("solvebutton").onclick = solve;
+		document.getElementById("solvebutton").onclick = solvePath;
 		// document.getElementById("reset").onclick = reset;
 		initializeTiles();
 
@@ -43,25 +43,40 @@ var State1;
 		goalState = new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y, false);
 
 		getSuccessorsStates(goalState);
-		solvePath();
 	};
 
 	// solves the puzzle returns a path based on swaps needed
 	// uses A* with a trivial manhatten distance, (amissable and consistant)
 	function solvePath() {
 		var child_pq = new PriorityQueue([]);
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#Browser_compatibility
 		var parent_set = new Set([]);
 		var parent_map = {};
+		var cost_map = {};
+		
+		// Debug/Test contains for map
+		// console.log(cost_map[startState] == null);
+		
 		var priority = 0;
-		child_pq.push(new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y), priority, false);
-		while (child_pq.sizeHeap > 0) {
+		var startState = new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y, false);
+		console.log("here1");
+		child_pq.push(startState, priority);
+		console.log(child_pq);
+		cost_map[startState] = priority; 
 
+		// Debug/Test Map operation
+		// console.log(cost_map[startState]);
+		// cost_map[startState] = 3; 
+		// console.log(cost_map[startState]);
+
+		while (child_pq.sizeHeap > 0) {
 			// Debug Heap
 			// console.log(child_pq.sizeHeap);
 			// console.log(child_pq.pop());
 			// console.log(child_pq.sizeHeap);
-
+			console.log(child_pq);
 			var parent = child_pq.pop();
+			console.log(child_pq);
 			if(parent.equals(goalState)){
 				return getPath();
 			}
@@ -69,13 +84,54 @@ var State1;
 				continue
 			}
 			parent_set.add(parent);
-			for (child in getSuccessorsStates(parent)) {
-				if (!(child in parent_set)) {
+			var SuccessorStates = getSuccessorsStates(parent);
+			for (var i = 0; i < SuccessorStates.length; i++) {
+				// Debug/Test SuccessorStaes
+				// console.log(SuccessorStates[i]);
+				var child = SuccessorStates[i];
+				if (!(parent_set.has(child))) {
+					// Debug/Test set operations
+					// console.log(child);
+					// console.log(parent_set);
+					// console.log(parent_set.has(parent));
+					var costMove = 1;
+					var cost = cost_map[parent] + costMove + heuristic(child);
+					console.log(child_pq);
+					child_pq.push(child, cost);
+					console.log(child_pq);
+					console.log("here2");
 
+					if (parent_map[child] == null || cost_map[child] > cost) {
+						parent_map[child] = ([parent, child]);
+					}
+
+					// Debug/Test cost function
+					// console.log(cost_map[parent] + costMove + heuristic(child));
+					
+					// Debug/Test heurisitc
+					// var heurCost = heuristic(child);
+					// console.log(heurCost);
+
+					//needs to be after for calculations
+					cost_map[child] = cost;
 				}
 			}
 
 		}
+	}
+
+	// heuristic function
+	function heuristic(state) {
+		var cost = 0;
+		for (var i = 0; i < 15; i++) {
+			var pointState = state.puzzleTiles[i];
+			var pointTiles = goalState.puzzleTiles[i];
+			// manhatten distance
+			var diffX = Math.abs(pointState.xLoc - pointTiles.xLoc);
+			var diffY = Math.abs(pointState.yLoc - pointTiles.yLoc);
+			cost = cost + diffX + diffY;
+		}
+		return cost / 100;
 	}
 
 	// get possible transition states for frindge
@@ -93,11 +149,10 @@ var State1;
 		// 	console.log(emptyPoint.xLoc + Directions[i].xLoc);
 		// 	console.log(emptyPoint.yLoc + Directions[i].yLoc);
 		// }
-
+		var SuccessorStates = [];
 		for (var i = 0; i < Directions.length; i++) {
 			var newX = emptyPoint.xLoc + Directions[i].xLoc;
 			var newY = emptyPoint.yLoc + Directions[i].yLoc;
-			var SuccessorStates = [];
 			if (newX >= 0 && newY >= 0 && newX <= BOUND && newY <= BOUND) {
 				// Debug boolean test
 				// console.log(newX + " " + newY);
@@ -108,28 +163,22 @@ var State1;
 
 				var copyParent = parent.copyState();
 				var tileToBeMoved = findTheTile(newX, newY, copyParent);
-				console.log(tileToBeMoved.xLoc);
-				console.log(tileToBeMoved.yLoc);
+				// console.log(tileToBeMoved.xLoc);
+				// console.log(tileToBeMoved.yLoc);
 				tileToBeMoved.xLoc = copyParent.emptyLoc.xLoc;
 				tileToBeMoved.yLoc = copyParent.emptyLoc.yLoc;
-				console.log(tileToBeMoved.xLoc);
-				console.log(tileToBeMoved.yLoc);
+				// console.log(tileToBeMoved.xLoc);
+				// console.log(tileToBeMoved.yLoc);
 				copyParent.emptyLoc.xLoc = newX;
 				copyParent.emptyLoc.yLoc = newY;
-				console.log(copyParent);
+				// console.log(copyParent);
 
-				// var childState;
-				// SuccessorStates.push(childState);
-				// break;
+				SuccessorStates.push(copyParent);
 			}
+			
 		}
-
-		// copy state?
-		// test if valid n, s, e, w
-		// create new states
-		// return a list of new states
-
-
+		// console.log(SuccessorStates);
+		return SuccessorStates;
 	}
 
 	// finds the tile at given location
@@ -382,8 +431,6 @@ var State1;
 			EMPTY_X = prevX;
 			EMPTY_Y = prevY;
 			clearInterval(timer);
-			var State2 = new StatePuzzle(puzzleTiles);
-			console.log(State1.equals(State2));
 		}
 
 	}
