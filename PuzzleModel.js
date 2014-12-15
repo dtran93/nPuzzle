@@ -1,66 +1,168 @@
 var State1;
 (function() {
 	"use strict";
-	
+	var PUZZLE_LENGTH = 4;
+	var puzzleTiles = [];
+	var TILE_SIZE = 100;
+	var EMPTY_X = 300;
+	var EMPTY_Y = 300;
+	var BOUND = PUZZLE_LENGTH * TILE_SIZE - 100;
+	var prevX = 0;
+	var prevY = 0;
+	var theTile = null;
+	var timer  = null;
+	var goalState;
+
 	// makes the buttons call when clicked and set up puzzle
 	window.onload = function(){
 		document.getElementById("shufflebutton").onclick = shuffle;
 		// document.getElementById("solvebutton").onclick = solve;
 		// document.getElementById("reset").onclick = reset;
 		initializeTiles();
+
 		// Finding exact values of puzzleTiles objects
 		// for (var i = 0; i < 15; i++) {
 		// 	console.log(puzzleTiles[i].innerHTML);
 		// 	console.log(puzzleTiles[i].style.left);
 		// 	console.log(puzzleTiles[i].style.top);
 		// }
+
+		// Debug/Test points
 		// var point1 = new Point2(1, 3);
 		// var point2 = new Point2(1, 3);
 		// var point3 = new Point2(2, 3);
 		// console.log(point1.toString().localeCompare(point2.toString()));
 		// console.log(point1.toString().localeCompare(point3.toString()));
+		
+		// Debug/Test states objects
 		// var State1 = new StatePuzzle(puzzleTiles);
 		// var State2 = new StatePuzzle(puzzleTiles);
 		// console.log(State1.equals(State2));
-		State1 = new StatePuzzle(puzzleTiles);
+		// State1 = new StatePuzzle(puzzleTiles);
+
+		goalState = new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y, false);
+
+		getSuccessorsStates(goalState);
 		solvePath();
 	};
-
-	var PUZZLE_LENGTH = 4;
-	var puzzleTiles = [];
-	var TILE_SIZE = 100;
-	var EMPTY_X = 300;
-	var EMPTY_Y = 300;
-	var prevX = 0;
-	var prevY = 0;
-	var theTile = null;
-	var timer  = null;
 
 	// solves the puzzle returns a path based on swaps needed
 	// uses A* with a trivial manhatten distance, (amissable and consistant)
 	function solvePath() {
 		var child_pq = new PriorityQueue([]);
-		var paretn_set = new Set([]);
+		var parent_set = new Set([]);
 		var parent_map = {};
 		var priority = 0;
-		child_pq.push(new StatePuzzle(puzzleTiles), priority);
+		child_pq.push(new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y), priority, false);
 		while (child_pq.sizeHeap > 0) {
+
+			// Debug Heap
 			// console.log(child_pq.sizeHeap);
 			// console.log(child_pq.pop());
 			// console.log(child_pq.sizeHeap);
+
 			var parent = child_pq.pop();
-			
+			if(parent.equals(goalState)){
+				return getPath();
+			}
+			if (parent in parent_set) {
+				continue
+			}
+			parent_set.add(parent);
+			for (child in getSuccessorsStates(parent)) {
+				if (!(child in parent_set)) {
+
+				}
+			}
+
 		}
 	}
 
-	// state of the puzzle rep. by tile possitions
-	function StatePuzzle(puzzleTiles) {
-		this.puzzleTiles = [15];
-		for (var i = 0; i < 15; i++) {
-			var point = new Point2(parseInt(puzzleTiles[i].style.left), parseInt(puzzleTiles[i].style.top));
-			this.puzzleTiles[parseInt(puzzleTiles[i].innerHTML) - 1] = point;
+	// get possible transition states for frindge
+	function getSuccessorsStates(parent) {
+		var emptyPoint = parent.emptyLoc;
+		var PointN = new Point2(0, 100);
+		var PointS = new Point2(0, -100);
+		var PointE = new Point2(100, 0);
+		var PointW = new Point2(-100, 0);
+		var Directions = [PointN, PointS, PointE, PointW];
+
+		// Debug/Test Directions
+		// console.log(emptyPoint.toString());
+		// for (var i = 0; i < 4; i++) {
+		// 	console.log(emptyPoint.xLoc + Directions[i].xLoc);
+		// 	console.log(emptyPoint.yLoc + Directions[i].yLoc);
+		// }
+
+		for (var i = 0; i < Directions.length; i++) {
+			var newX = emptyPoint.xLoc + Directions[i].xLoc;
+			var newY = emptyPoint.yLoc + Directions[i].yLoc;
+			var SuccessorStates = [];
+			if (newX >= 0 && newY >= 0 && newX <= BOUND && newY <= BOUND) {
+				// Debug boolean test
+				// console.log(newX + " " + newY);
+
+				// find tile with given newX, newY
+				// Debug/Test findTile
+				//console.log(findTile(newX, newY, parent));
+
+				var copyParent = parent.copyState();
+				var tileToBeMoved = findTheTile(newX, newY, copyParent);
+				console.log(tileToBeMoved.xLoc);
+				console.log(tileToBeMoved.yLoc);
+				tileToBeMoved.xLoc = copyParent.emptyLoc.xLoc;
+				tileToBeMoved.yLoc = copyParent.emptyLoc.yLoc;
+				console.log(tileToBeMoved.xLoc);
+				console.log(tileToBeMoved.yLoc);
+				copyParent.emptyLoc.xLoc = newX;
+				copyParent.emptyLoc.yLoc = newY;
+				console.log(copyParent);
+
+				// var childState;
+				// SuccessorStates.push(childState);
+				// break;
+			}
 		}
 
+		// copy state?
+		// test if valid n, s, e, w
+		// create new states
+		// return a list of new states
+
+
+	}
+
+	// finds the tile at given location
+	// Should be using inverse indexing for faster look up
+	function findTheTile(x, y, state){
+		for(var i = 0; i < PUZZLE_LENGTH * 4 - 1; i++){
+			if(state.puzzleTiles[i].xLoc == x && state.puzzleTiles[i].yLoc == y){
+				// Debug/Test tile found
+				// console.log("found");
+				return state.puzzleTiles[i];
+			}
+		}
+		return null;
+	}
+
+	// get shortest solving path
+	function getPath() {
+		console.log("getPathhere");
+	}
+
+	// state of the puzzle rep. by tile possitions
+	function StatePuzzle(puzzleTiles, emptyX, emptyY, copy) {
+		this.puzzleTiles = [15];
+		if (copy) {
+			this.puzzleTiles = puzzleTiles;
+		} else{
+			for (var i = 0; i < 15; i++) {
+				// effectively reducing memory size of state
+				var point = new Point2(parseInt(puzzleTiles[i].style.left), parseInt(puzzleTiles[i].style.top));
+				this.puzzleTiles[parseInt(puzzleTiles[i].innerHTML) - 1] = point;
+			}
+		}
+		this.emptyLoc = new Point2(emptyX, emptyY);
 		this.equals = function (other) {
 			for (var i = 0; i < puzzleTiles.length; i++) {
 				if (this.puzzleTiles[i.toString()].toString().localeCompare(other.puzzleTiles[i.toString()].toString()) !== 0) {
@@ -69,6 +171,14 @@ var State1;
 			}
 			return true;
 		};
+
+		this.copyState = function () {
+			var PointArray = [15]; 
+			for (var i = 0; i < 15; i++) {
+				PointArray[i] = this.puzzleTiles[i].copyPoint(); 
+			}
+			return new StatePuzzle(PointArray, this.emptyLoc.xLoc, this.emptyLoc.yLoc, true);
+		}
 	}
 
 	// standard point x, y
@@ -78,9 +188,13 @@ var State1;
 		this.toString = function() {
 			return "" + x + " " + y;
 		};
+
+		this.copyPoint = function() {
+			return new Point2(this.xLoc, this.yLoc);
+		}
 	}
 
-/*****************************************************Priority Queue*****************************************************/
+/********************************************Priority Queue: Modified From:**********************************************/
 /*****************************************http://jsfiddle.net/GRIFFnDOOR/r7tvg/******************************************/
 /************************************************************************************************************************/
 
