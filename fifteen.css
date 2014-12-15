@@ -1,0 +1,41 @@
+/*David Tran, Hw8, HOLDEN,NICHOLAS B 5.29.2013
+This is the css for fifteen.html*/
+
+button {
+	font-family: cursive;
+}
+
+.tile {
+	width: 90px;
+	height: 90px;
+	border: black solid 5px;
+	font-size: 40pt;
+	cursor: default;
+	position: absolute;
+	background-color: #000000;
+}
+
+.highlight:hover {
+	color: red;
+	border: red solid 5px;
+	cursor: pointer;
+}
+
+#puzzlearea {
+	width: 400px;
+	height: 400px;
+	margin: auto;
+	position: relative;
+	color: yellow;
+}
+
+#shufflebutton {
+	color: red;
+	background-color : black;
+	font-size : 14pt;
+} 
+#solvebutton{
+	color: yellow;
+	background-color : black;
+	font-size : 14pt;
+} 
