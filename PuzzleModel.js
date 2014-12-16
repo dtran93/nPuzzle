@@ -53,37 +53,31 @@ var State1;
 		var parent_map = new Map();
 		var cost_map = new Map();
 		
-		// Debug/Test contains for map
-		// console.log(cost_map[startState] == null);
-		
 		var priority = 0;
 		var startState = new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y, false);
 
-		child_pq.push(startState, priority);
-		cost_map.set(startState, priority);
-		// Debug/Test Map operation
-		// console.log(cost_map[startState]);
-		// cost_map[startState] = 3; 
-		// cost_map[startState] = 3; 
-		// cost_map[goalState] = 5;
-		// console.log(goalState.equals(startState)); 
+		// Debug/Test Successor states
+		// var succuss = getSuccessorsStates(startState);
+		// console.log(succuss[0].toString());
+		// console.log(succuss[1].toString());
+		// console.log(succuss[2].toString());
 
-		while (child_pq.heap.length > 0) {
-			// Debug Heap
-			// console.log(child_pq.sizeHeap);
-			// console.log(child_pq.pop());
-			// console.log(child_pq.sizeHeap);
+		child_pq.push(startState, priority);
+		cost_map.set(startState.toString(), priority);
+
+		while (child_pq.queueSize > 0) {
 
 			var parent = child_pq.pop();
 			if(parent.equals(goalState)){
+				// console.log(parent_map);
 				return getPath();
 			}
-			if (parent_set.has(parent)) {
-				console.log("parent in parent set");
+			if (parent_set.has(parent.toString())) {
+				// console.log("parent in parent set");
 				continue;
 			}
 
-			parent_set.add(parent);
+			parent_set.add(parent.toString());
 
 			var SuccessorStates = getSuccessorsStates(parent);
 
@@ -93,17 +87,13 @@ var State1;
 			// console.log(heuristic(SuccessorStates[1]));
 			// console.log(heuristic(SuccessorStates[2]));
 
-			// Debug/Test Map operations
-			// console.log(!(parent_set.has(SuccessorStates[0])));
-			// console.log(!(parent_set.has(SuccessorStates[1])));
-			// console.log(!(parent_set.has(SuccessorStates[2])));
 			for (var i = 0; i < SuccessorStates.length; i++) {
 				var child = SuccessorStates[i];
-				if (!(parent_set.has(child))) {
+				if (!(parent_set.has(child.toString()))) {
 
 					var costMove = 1;
 					var heurCost = heuristic(child);
-					var costParent = cost_map.get(parent);
+					var costParent = cost_map.get(parent.toString());
 
 					if (costParent == null) {
 						var cost = costMove + heurCost;
@@ -112,8 +102,8 @@ var State1;
 					}
 					child_pq.push(child, cost);
 
-					if (!parent_map.has(child) || cost_map.get(child) > cost) {
-						parent_map.set(parent, child);
+					if (!parent_map.has(child.toString()) || cost_map.get(child.toString()) > cost) {
+						parent_map.set(parent.toString(), child.toString());
 					}
 
 					// Debug/Test cost function
@@ -124,7 +114,7 @@ var State1;
 					// console.log(heurCost);
 
 					//needs to be after for calculations
-					cost_map.set(child, cost);
+					cost_map.set(child.toString(), cost);
 				}
 			}
 		}
@@ -259,74 +249,50 @@ var State1;
 		}
 	}
 
-/********************************************Priority Queue: Modified From:**********************************************/
-/*****************************************http://jsfiddle.net/GRIFFnDOOR/r7tvg/******************************************/
+/********************************************Priority Queue: Using Array and Find Max************************************/
 /************************************************************************************************************************/
-
+/************************************************************************************************************************/
 	function Node (data, priority) {
 	    this.data = data;
 	    this.priority = priority;
 	}
-	Node.prototype.toString = function(){return this.priority}
 
-	// takes an array of objects with {data, priority}
-	function PriorityQueue (arr) {
-	    this.heap = [null];
-	    if (arr) for (i=0; i< arr.length; i++)
-	        this.push(arr[i].data, arr[i].priority);
+	function PriorityQueue () {
+		this.arrayHeap = [];
+		this.queueSize = 0;
 	}
 
 	PriorityQueue.prototype = {
-	    push: function(data, priority) {
-	        var node = new Node(data, priority);
-	        this.bubble(this.heap.push(node) -1);      
-	    },
-	    
-	    // removes and returns the data of highest priority
-	    pop: function() {
-	        var topVal = this.heap[1].data;
-	        this.heap[1] = this.heap.pop();
-	        this.sink(1); return topVal;
-	    },
-	    
-	    // bubbles node i up the binary tree based on
-	    // priority until heap conditions are restored
-	    bubble: function(i) {
-	        while (i > 1) { 
-	            var parentIndex = i >> 1; // <=> floor(i/2)
-	            
-	            // if equal, no bubble (maintains insertion order)
-	            if (!this.isHigherPriority(i, parentIndex)) break;
-	            
-	            this.swap(i, parentIndex);
-	            i = parentIndex;
-	    }   },
-	        
-	    // does the opposite of the bubble() function
-	    sink: function(i) {
-	        while (i*2 < this.heap.length) {
-	            // if equal, left bubbles (maintains insertion order)
-	            var leftHigher = !this.isHigherPriority(i*2 +1, i*2);
-	            var childIndex = leftHigher? i*2 : i*2 +1;
-	            
-	            // if equal, sink happens (maintains insertion order)
-	            if (this.isHigherPriority(i,childIndex)) break;
-	            
-	            this.swap(i, childIndex);
-	            i = childIndex;
-	    }   },
-	        
-	    // swaps the addresses of 2 nodes
-	    swap: function(i,j) {
-	        var temp = this.heap[i];
-	        this.heap[i] = this.heap[j];
-	        this.heap[j] = temp;
-	    },
-	        
-	    // returns true if node i is higher priority than j
-	    isHigherPriority: function(i,j) {
-	        return this.heap[i].priority < this.heap[j].priority;
-	    }
+		push: function(data, priority) {
+			this.queueSize++;
+			var node = new Node(data, priority);
+			this.arrayHeap.push(node);
+		},
+
+		pop: function() {
+			var minValue = Number.MAX_VALUE;
+			var minIndex = -1;
+			if (this.queueSize == 0) {
+				return null;
+			}
+
+			for (var i = 0; i < this.queueSize; i++) {
+				if (this.arrayHeap[i].priority < minValue) {
+					minIndex = i;
+					minValue = this.arrayHeap[i].priority;
+				}
+			}
+
+			// get not
+			var node = this.arrayHeap[minIndex];
+			var nodeCopy = new Node(node.data, node.priority);
+			// remove node
+			this.arrayHeap[minIndex] = this.arrayHeap[this.queueSize - 1];
+			this.queueSize--;
+			this.arrayHeap.pop();
+
+			return nodeCopy.data;
+		}
 	}
 
 	/*****************************************************View/Control*******************************************************/
@@ -459,5 +425,94 @@ var State1;
 			EMPTY_Y = y;
 		}
 	}
+
+// /***************************************PQ Test*************************************/
+// 	var PriorityQueueTest = new PriorityQueue();
+// 	PriorityQueueTest.push("a", 4);
+// 	PriorityQueueTest.push("b", 3);
+// 	PriorityQueueTest.push("c", 2);
+// 	PriorityQueueTest.push("d", 1);
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	PriorityQueueTest.push("apple", 4);
+// 	PriorityQueueTest.push("apple3", 3);
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log("test 3");
+// 	PriorityQueueTest.push("apple", 1);
+// 	PriorityQueueTest.push("apple2", 3);
+// 	PriorityQueueTest.push("apple", 2);
+// 	PriorityQueueTest.push("apple3", 5);
+// 	PriorityQueueTest.push("apple", 7);
+// 	PriorityQueueTest.push("apple2", 2);
+// 	PriorityQueueTest.push("apple", 86);
+// 	PriorityQueueTest.push("apple3", 12);
+// 	PriorityQueueTest.push("apple", 232);
+// 	PriorityQueueTest.push("apple2", 1);
+// 	PriorityQueueTest.push("apple", 0);
+// 	PriorityQueueTest.push("apple3", 9);
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+// 	console.log(PriorityQueueTest.pop());
+
 	
+// /***************************************Set Test************************************/
+// 	var SetTest = new Set();
+// 	var PointA = new Point2(1,4);
+// 	var PointB = new Point2(1,4);
+// 	var PointC = new Point2(2,4);
+// 	var PointD = new Point2(2,4);
+// 	SetTest.add(PointA);
+// 	SetTest.add(PointB);
+// 	SetTest.add(PointC);
+// 	SetTest.add(PointD);
+// 	console.log(SetTest);
+	
+// 	var SetTestB = new Set();
+// 	SetTestB.add(PointA.toString());
+// 	SetTestB.add(PointB.toString());
+// 	SetTestB.add(PointC.toString());
+// 	SetTestB.add(PointD.toString());
+// 	console.log(SetTestB);
+// 	console.log(SetTestB.has(PointA.toString()));
+// 	console.log(SetTestB.has(PointB.toString()));
+
+// /***************************************Map Test************************************/
+// 	var MapTest = new Map();
+// 	var PointA = new Point2(1,4);
+// 	var PointB = new Point2(1,4);
+// 	var PointC = new Point2(2,4);
+// 	var PointD = new Point2(2,4);
+// 	MapTest.set(PointA, 1);
+// 	MapTest.set(PointB, 2);
+// 	MapTest.set(PointC, 1);
+// 	MapTest.set(PointD, 2);
+// 	console.log(MapTest);
+	
+// 	var MapTestB = new Map();
+// 	MapTestB.set(PointA.toString(), 1);
+// 	MapTestB.set(PointB.toString(), 2);
+// 	MapTestB.set(PointC.toString(), 3);
+// 	MapTestB.set(PointD.toString(), 4);
+// 	console.log(MapTestB);
+// 	console.log(MapTestB.has(PointA.toString()));
+// 	console.log(MapTestB.has(PointB.toString()));
+// 	console.log(MapTestB.has(PointC.toString()));
+// 	console.log(MapTestB.has(PointC.toString()));
+// 	console.log(MapTestB.get(PointA.toString()));
 })();
