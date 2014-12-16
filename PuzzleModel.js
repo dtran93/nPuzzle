@@ -41,68 +41,79 @@ var State1;
 		// State1 = new StatePuzzle(puzzleTiles);
 
 		goalState = new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y, false);
-
-		getSuccessorsStates(goalState);
 	};
 
 	// solves the puzzle returns a path based on swaps needed
 	// uses A* with a trivial manhatten distance, (amissable and consistant)
 	function solvePath() {
-		var child_pq = new PriorityQueue([]);
+		var child_pq = new PriorityQueue();
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#Browser_compatibility
-		var parent_set = new Set([]);
-		var parent_map = {};
-		var cost_map = {};
+		var parent_set = new Set();
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map
+		var parent_map = new Map();
+		var cost_map = new Map();
 		
 		// Debug/Test contains for map
 		// console.log(cost_map[startState] == null);
 		
 		var priority = 0;
 		var startState = new StatePuzzle(puzzleTiles, EMPTY_X, EMPTY_Y, false);
-		console.log("here1");
-		child_pq.push(startState, priority);
-		console.log(child_pq);
-		cost_map[startState] = priority; 
 
+		child_pq.push(startState, priority);
+		cost_map.set(startState, priority);
 		// Debug/Test Map operation
 		// console.log(cost_map[startState]);
 		// cost_map[startState] = 3; 
-		// console.log(cost_map[startState]);
+		// cost_map[startState] = 3; 
+		// cost_map[goalState] = 5;
+		// console.log(goalState.equals(startState)); 
 
-		while (child_pq.sizeHeap > 0) {
+		while (child_pq.heap.length > 0) {
 			// Debug Heap
 			// console.log(child_pq.sizeHeap);
 			// console.log(child_pq.pop());
 			// console.log(child_pq.sizeHeap);
-			console.log(child_pq);
+
 			var parent = child_pq.pop();
-			console.log(child_pq);
 			if(parent.equals(goalState)){
 				return getPath();
 			}
-			if (parent in parent_set) {
-				continue
+			if (parent_set.has(parent)) {
+				console.log("parent in parent set");
+				continue;
 			}
+
 			parent_set.add(parent);
+
 			var SuccessorStates = getSuccessorsStates(parent);
+
+			// Debug/Test Heuristics
+			// console.log(SuccessorStates);
+			// console.log(heuristic(SuccessorStates[0]));
+			// console.log(heuristic(SuccessorStates[1]));
+			// console.log(heuristic(SuccessorStates[2]));
+
+			// Debug/Test Map operations
+			// console.log(!(parent_set.has(SuccessorStates[0])));
+			// console.log(!(parent_set.has(SuccessorStates[1])));
+			// console.log(!(parent_set.has(SuccessorStates[2])));
 			for (var i = 0; i < SuccessorStates.length; i++) {
-				// Debug/Test SuccessorStaes
-				// console.log(SuccessorStates[i]);
 				var child = SuccessorStates[i];
 				if (!(parent_set.has(child))) {
-					// Debug/Test set operations
-					// console.log(child);
-					// console.log(parent_set);
-					// console.log(parent_set.has(parent));
-					var costMove = 1;
-					var cost = cost_map[parent] + costMove + heuristic(child);
-					console.log(child_pq);
-					child_pq.push(child, cost);
-					console.log(child_pq);
-					console.log("here2");
 
-					if (parent_map[child] == null || cost_map[child] > cost) {
-						parent_map[child] = ([parent, child]);
+					var costMove = 1;
+					var heurCost = heuristic(child);
+					var costParent = cost_map.get(parent);
+
+					if (costParent == null) {
+						var cost = costMove + heurCost;
+					} else{
+						var cost = costParent + costMove + heurCost;
+					}
+					child_pq.push(child, cost);
+
+					if (!parent_map.has(child) || cost_map.get(child) > cost) {
+						parent_map.set(parent, child);
 					}
 
 					// Debug/Test cost function
@@ -113,10 +124,9 @@ var State1;
 					// console.log(heurCost);
 
 					//needs to be after for calculations
-					cost_map[child] = cost;
+					cost_map.set(child, cost);
 				}
 			}
-
 		}
 	}
 
@@ -149,6 +159,7 @@ var State1;
 		// 	console.log(emptyPoint.xLoc + Directions[i].xLoc);
 		// 	console.log(emptyPoint.yLoc + Directions[i].yLoc);
 		// }
+
 		var SuccessorStates = [];
 		for (var i = 0; i < Directions.length; i++) {
 			var newX = emptyPoint.xLoc + Directions[i].xLoc;
@@ -171,13 +182,10 @@ var State1;
 				// console.log(tileToBeMoved.yLoc);
 				copyParent.emptyLoc.xLoc = newX;
 				copyParent.emptyLoc.yLoc = newY;
-				// console.log(copyParent);
-
 				SuccessorStates.push(copyParent);
 			}
 			
 		}
-		// console.log(SuccessorStates);
 		return SuccessorStates;
 	}
 
@@ -196,7 +204,7 @@ var State1;
 
 	// get shortest solving path
 	function getPath() {
-		console.log("getPathhere");
+		console.log("get Path here");
 	}
 
 	// state of the puzzle rep. by tile possitions
@@ -214,7 +222,7 @@ var State1;
 		this.emptyLoc = new Point2(emptyX, emptyY);
 		this.equals = function (other) {
 			for (var i = 0; i < puzzleTiles.length; i++) {
-				if (this.puzzleTiles[i.toString()].toString().localeCompare(other.puzzleTiles[i.toString()].toString()) !== 0) {
+				if (this.puzzleTiles[i].toString().localeCompare(other.puzzleTiles[i].toString()) !== 0) {
 					return false;
 				}
 			}
@@ -228,6 +236,14 @@ var State1;
 			}
 			return new StatePuzzle(PointArray, this.emptyLoc.xLoc, this.emptyLoc.yLoc, true);
 		}
+
+		this.toString = function() {
+			var string = "";
+			for (var i = 0; i < 15; i++) {
+				string += this.puzzleTiles[i].toString() + "  ";
+			}
+			return string;
+		}
 	}
 
 	// standard point x, y
@@ -235,7 +251,7 @@ var State1;
 		this.xLoc = x;
 		this.yLoc = y;
 		this.toString = function() {
-			return "" + x + " " + y;
+			return "" + this.xLoc + " " + this.yLoc;
 		};
 
 		this.copyPoint = function() {
@@ -255,22 +271,19 @@ var State1;
 
 	// takes an array of objects with {data, priority}
 	function PriorityQueue (arr) {
-		this.sizeHeap = 0;
 	    this.heap = [null];
-	    if (arr) for (var i=0; i< arr.length; i++)
+	    if (arr) for (i=0; i< arr.length; i++)
 	        this.push(arr[i].data, arr[i].priority);
 	}
 
 	PriorityQueue.prototype = {
 	    push: function(data, priority) {
-	    	this.sizeHeap++;
 	        var node = new Node(data, priority);
 	        this.bubble(this.heap.push(node) -1);      
 	    },
 	    
 	    // removes and returns the data of highest priority
 	    pop: function() {
-	    	this.sizeHeap--;
 	        var topVal = this.heap[1].data;
 	        this.heap[1] = this.heap.pop();
 	        this.sink(1); return topVal;
