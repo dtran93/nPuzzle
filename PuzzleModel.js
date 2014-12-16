@@ -12,6 +12,8 @@ var State1;
 	var theTile = null;
 	var timer  = null;
 	var goalState;
+	var SolutionTimer = null;
+	var PATH_ARRAY;
 
 	// makes the buttons call when clicked and set up puzzle
 	window.onload = function(){
@@ -71,7 +73,15 @@ var State1;
 			var parent = child_pq.pop();
 			if(parent.equals(goalState)){
 				// console.log(parent_map);
-				executePath(getPath(parent, startState, parent_map));
+				PATH_ARRAY = getPath(parent, startState, parent_map);
+				SolutionTimer = setInterval(function executePath() {
+					// console.log(PATH_ARRAY);
+					if (PATH_ARRAY.length == 0) {
+						clearInterval(SolutionTimer);
+					}
+					moveTile(PATH_ARRAY[PATH_ARRAY.length - 1]);
+					PATH_ARRAY.pop();
+				}, 500);
 				return;
 			}
 			if (parent_set.has(parent.toString())) {
@@ -122,16 +132,26 @@ var State1;
 		}
 	}
 
+	// // execute solution 
+	// function executePath(path_array) {
+	// 	console.log(path_array);
+	// 	// console.log("hereEx");
+	// 	// console.log(EMPTY_X + " " + EMPTY_Y);
+	// 	// console.log(prevX + " " + prevY);
+	// 	for (var i = path_array.length - 1; i >= 0; i--) {
+	// 		moveTile(path_array[i]);
+	// 	}
+	// }
+
 	// execute solution 
-	function executePath(path_array) {
-		console.log(path_array);
-		// console.log("hereEx");
-		// console.log(EMPTY_X + " " + EMPTY_Y);
-		// console.log(prevX + " " + prevY);
-		for (var i = path_array.length - 1; i >= 0; i--) {
-			moveTile(path_array[i]);
-		}
-	}
+	// function executePath() {
+	// 	console.log(PATH_ARRAY);
+	// 	if (PATH_ARRAY.length == 0) {
+	// 		SolutionTimer = null;
+	// 	}
+	// 	moveTile(PATH_ARRAY[PATH_ARRAY.length - 1]);
+	// 	PATH_ARRAY.pop();
+	// }
 
 	// heuristic function
 	function heuristic(state) {
@@ -466,6 +486,9 @@ var State1;
 		var Directions = [PointN, PointS, PointE, PointW];
 		// console.log(Dir);
 		var index = NSEW.indexOf(Dir);
+		if (index == -1 || index > 3) {
+			return;
+		}
 		// console.log(index);
 		// console.log(Directions[index]);
 		
