@@ -1,11 +1,11 @@
 var State1;
 (function() {
 	"use strict";
-	var PUZZLE_LENGTH = 4;
+	var PUZZLE_LENGTH = 3;
 	var puzzleTiles = [];
 	var TILE_SIZE = 100;
-	var EMPTY_X = 300;
-	var EMPTY_Y = 300;
+	var EMPTY_X = 200;
+	var EMPTY_Y = 200;
 	var BOUND = PUZZLE_LENGTH * TILE_SIZE - 100;
 	var prevX = 0;
 	var prevY = 0;
@@ -46,6 +46,7 @@ var State1;
 	// solves the puzzle returns a path based on swaps needed
 	// uses A* with a trivial manhatten distance, (amissable and consistant)
 	function solvePath() {
+		document.getElementById("nodes").innerHTML = 0;
 		var child_pq = new PriorityQueue();
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#Browser_compatibility
 		var parent_set = new Set();
@@ -70,7 +71,7 @@ var State1;
 			var parent = child_pq.pop();
 			if(parent.equals(goalState)){
 				// console.log(parent_map);
-				return getPath();
+				return getPath(parent, startState, parent_map);
 			}
 			if (parent_set.has(parent.toString())) {
 				// console.log("parent in parent set");
@@ -80,7 +81,7 @@ var State1;
 			parent_set.add(parent.toString());
 
 			var SuccessorStates = getSuccessorsStates(parent);
-
+			document.getElementById("nodes").innerHTML = parseInt(document.getElementById("nodes").innerHTML) + 1;
 			// Debug/Test Heuristics
 			// console.log(SuccessorStates);
 			// console.log(heuristic(SuccessorStates[0]));
@@ -88,7 +89,7 @@ var State1;
 			// console.log(heuristic(SuccessorStates[2]));
 
 			for (var i = 0; i < SuccessorStates.length; i++) {
-				var child = SuccessorStates[i];
+				var child = SuccessorStates[i][0];
 				if (!(parent_set.has(child.toString()))) {
 
 					var costMove = 1;
@@ -103,7 +104,7 @@ var State1;
 					child_pq.push(child, cost);
 
 					if (!parent_map.has(child.toString()) || cost_map.get(child.toString()) > cost) {
-						parent_map.set(parent.toString(), child.toString());
+						parent_map.set(child.toString(), [parent.toString(), SuccessorStates[i][1]]);
 					}
 
 					// Debug/Test cost function
@@ -123,7 +124,7 @@ var State1;
 	// heuristic function
 	function heuristic(state) {
 		var cost = 0;
-		for (var i = 0; i < 15; i++) {
+		for (var i = 0; i < PUZZLE_LENGTH * PUZZLE_LENGTH - 1; i++) {
 			var pointState = state.puzzleTiles[i];
 			var pointTiles = goalState.puzzleTiles[i];
 			// manhatten distance
@@ -137,10 +138,11 @@ var State1;
 	// get possible transition states for frindge
 	function getSuccessorsStates(parent) {
 		var emptyPoint = parent.emptyLoc;
-		var PointN = new Point2(0, 100);
-		var PointS = new Point2(0, -100);
+		var PointN = new Point2(0, -100);
+		var PointS = new Point2(0, 100);
 		var PointE = new Point2(100, 0);
 		var PointW = new Point2(-100, 0);
+		var NSEW = ["N", "S", "E", "W"];
 		var Directions = [PointN, PointS, PointE, PointW];
 
 		// Debug/Test Directions
@@ -172,7 +174,7 @@ var State1;
 				// console.log(tileToBeMoved.yLoc);
 				copyParent.emptyLoc.xLoc = newX;
 				copyParent.emptyLoc.yLoc = newY;
-				SuccessorStates.push(copyParent);
+				SuccessorStates.push([copyParent, NSEW[i]]);
 			}
 			
 		}
@@ -182,7 +184,7 @@ var State1;
 	// finds the tile at given location
 	// Should be using inverse indexing for faster look up
 	function findTheTile(x, y, state){
-		for(var i = 0; i < PUZZLE_LENGTH * 4 - 1; i++){
+		for(var i = 0; i < PUZZLE_LENGTH * PUZZLE_LENGTH - 1; i++){
 			if(state.puzzleTiles[i].xLoc == x && state.puzzleTiles[i].yLoc == y){
 				// Debug/Test tile found
 				// console.log("found");
@@ -193,17 +195,32 @@ var State1;
 	}
 
 	// get shortest solving path
-	function getPath() {
-		console.log("get Path here");
+	function getPath(end, start, parent_map) {
+		// console.log("get Path here");
+		// console.log(end);
+		// console.log(start);
+		// console.log(parent_map);
+
+		var path_sol = [];
+
+		var start = start.toString();
+		var cur = end.toString();
+
+		while (cur.localeCompare(start) !== 0 ) {
+			path_sol.push(parent_map.get(cur)[1]);
+			cur = parent_map.get(cur)[0];
+		}
+		// console.log(path_sol);
+		return path_sol;
 	}
 
 	// state of the puzzle rep. by tile possitions
 	function StatePuzzle(puzzleTiles, emptyX, emptyY, copy) {
-		this.puzzleTiles = [15];
+		this.puzzleTiles = [PUZZLE_LENGTH * PUZZLE_LENGTH - 1];
 		if (copy) {
 			this.puzzleTiles = puzzleTiles;
 		} else{
-			for (var i = 0; i < 15; i++) {
+			for (var i = 0; i < PUZZLE_LENGTH * PUZZLE_LENGTH - 1; i++) {
 				// effectively reducing memory size of state
 				var point = new Point2(parseInt(puzzleTiles[i].style.left), parseInt(puzzleTiles[i].style.top));
 				this.puzzleTiles[parseInt(puzzleTiles[i].innerHTML) - 1] = point;
@@ -220,8 +237,8 @@ var State1;
 		};
 
 		this.copyState = function () {
-			var PointArray = [15]; 
-			for (var i = 0; i < 15; i++) {
+			var PointArray = [PUZZLE_LENGTH * PUZZLE_LENGTH - 1]; 
+			for (var i = 0; i < PUZZLE_LENGTH * PUZZLE_LENGTH - 1; i++) {
 				PointArray[i] = this.puzzleTiles[i].copyPoint(); 
 			}
 			return new StatePuzzle(PointArray, this.emptyLoc.xLoc, this.emptyLoc.yLoc, true);
@@ -229,7 +246,7 @@ var State1;
 
 		this.toString = function() {
 			var string = "";
-			for (var i = 0; i < 15; i++) {
+			for (var i = 0; i < PUZZLE_LENGTH * PUZZLE_LENGTH - 1; i++) {
 				string += this.puzzleTiles[i].toString() + "  ";
 			}
 			return string;
@@ -350,7 +367,7 @@ var State1;
 
 	// finds the tile at given location
 	function findTile(x, y){
-		for(var i = 0; i < PUZZLE_LENGTH * 4 - 1; i++){
+		for(var i = 0; i < PUZZLE_LENGTH * PUZZLE_LENGTH - 1; i++){
 			if(parseInt(puzzleTiles[i].style.left) == x && parseInt(puzzleTiles[i].style.top) == y){
 				return puzzleTiles[i];
 			}
@@ -424,6 +441,23 @@ var State1;
 			EMPTY_X = x;
 			EMPTY_Y = y;
 		}
+	}
+
+	// move Tile by direction 
+	function moveTile(Dir) {
+		var PointN = new Point2(0, -100);
+		var PointS = new Point2(0, 100);
+		var PointE = new Point2(100, 0);
+		var PointW = new Point2(-100, 0);
+		var NSEW = ["N", "S", "E", "W"];
+		var Directions = [PointN, PointS, PointE, PointW];
+
+		
+	}
+
+	// find the tile at given location
+	function findTile(location) {
+
 	}
 
 // /***************************************PQ Test*************************************/
