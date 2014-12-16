@@ -71,7 +71,8 @@ var State1;
 			var parent = child_pq.pop();
 			if(parent.equals(goalState)){
 				// console.log(parent_map);
-				return getPath(parent, startState, parent_map);
+				executePath(getPath(parent, startState, parent_map));
+				return;
 			}
 			if (parent_set.has(parent.toString())) {
 				// console.log("parent in parent set");
@@ -118,6 +119,17 @@ var State1;
 					cost_map.set(child.toString(), cost);
 				}
 			}
+		}
+	}
+
+	// execute solution 
+	function executePath(path_array) {
+		console.log(path_array);
+		// console.log("hereEx");
+		// console.log(EMPTY_X + " " + EMPTY_Y);
+		// console.log(prevX + " " + prevY);
+		for (var i = path_array.length - 1; i >= 0; i--) {
+			moveTile(path_array[i]);
 		}
 	}
 
@@ -445,19 +457,37 @@ var State1;
 
 	// move Tile by direction 
 	function moveTile(Dir) {
+		// console.log("here");
 		var PointN = new Point2(0, -100);
 		var PointS = new Point2(0, 100);
 		var PointE = new Point2(100, 0);
 		var PointW = new Point2(-100, 0);
-		var NSEW = ["N", "S", "E", "W"];
+		var NSEW = "NSEW";
 		var Directions = [PointN, PointS, PointE, PointW];
-
+		// console.log(Dir);
+		var index = NSEW.indexOf(Dir);
+		// console.log(index);
+		// console.log(Directions[index]);
 		
+		// console.log(EMPTY_X);
+		// console.log(EMPTY_Y);
+		var newX = Directions[index].xLoc + EMPTY_X;
+		var newY = Directions[index].yLoc + EMPTY_Y;
+		// console.log(newX);
+		// console.log(newY);
+		var tile = findTile(newX, newY);
+		movehelperNoSlide(tile);
 	}
 
 	// find the tile at given location
-	function findTile(location) {
-
+	function findTile(x, y) {
+		for (var i = 0; i < puzzleTiles.length; i++) {
+			if (parseInt(puzzleTiles[i].style.left) == x && parseInt(puzzleTiles[i].style.top) == y) {
+				return puzzleTiles[i];
+			}
+		}
+		console.log("null");
+		return null;
 	}
 
 // /***************************************PQ Test*************************************/
